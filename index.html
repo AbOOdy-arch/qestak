@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="description" content="Qestak (قسطك) — choose any new or used car from Dubizzle, Facebook Marketplace, Hatla2ee, a showroom or a dealership. We buy it for you and you pay monthly installments." />
+<meta name="theme-color" content="#1D4ED8" />
+<meta property="og:title" content="Qestak | قسطك — Car financing in Egypt" />
+<meta property="og:description" content="Any car. From anywhere. We buy it — you pay monthly. أي عربية من أي مكان — إحنا نشتريها وإنت تقسّط." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%231D4ED8'/%3E%3Cpath d='M16 38l4-11c1-3 3-4 6-4h12c3 0 5 1 6 4l4 11v8h-6v-4H22v4h-6z' fill='white'/%3E%3Ccircle cx='23' cy='38' r='3' fill='%231D4ED8'/%3E%3Ccircle cx='41' cy='38' r='3' fill='%231D4ED8'/%3E%3C/svg%3E" />
+<title>Qestak | قسطك — Car financing in Egypt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>window.react = window.React; /* lucide-react UMD expects a lowercase global */</script>
+<script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js"></script>
+<style>html,body{margin:0;background:#F4F7FC;color:#0F172A;color-scheme:light}input[type=range]{height:6px}</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const { useMemo, useState } = React;
+const __L = window.LucideReact || {};
+const __stub = (p) => React.createElement("svg", { viewBox: "0 0 24 24", className: p.className, fill: "none", stroke: "currentColor", strokeWidth: 2 }, React.createElement("circle", { cx: 12, cy: 12, r: 8 }));
+const { Car,Link2,Calendar,Calculator,Briefcase,Building2,Home,Plane,ShieldCheck,FileText,CheckCircle2,Phone,MessageCircle,Languages,ArrowRight,BadgeCheck,Info,User,X,Percent,Clock,Wallet,Copy,Search, } = new Proxy(__L, { get: (o, k) => o[k] || __stub });
+const CONFIG = {
+  brandNameEn: "Qestak",
+  brandNameAr: "\u0642\u0633\u0637\u0643",
+  interestRate: 18.5,
+  // FIXED annual flat interest rate (%)
+  maxLimit: 2e7,
+  // max car price / financing limit (EGP)
+  minPrice: 2e5,
+  // min car price (EGP)
+  defaultPrice: 1e6,
+  tenors: [12, 24, 36, 48, 60],
+  defaultTenor: 60,
+  downPaymentOptions: [0, 15, 25, 30, 40, 50],
+  defaultDownPayment: 0,
+  maxDownPayment: 70,
+  // slider upper bound (%)
+  modelYearFrom: 2015,
+  // oldest accepted used-car model year
+  modelYearTo: 2026,
+  // Call-request delivery: paste your Google Apps Script Web App URL here
+  // (see qestak-leads-AppsScript.gs). Each request is saved to your Google Sheet
+  // and emailed to you. Leave "" to send call requests over WhatsApp instead.
+  leadEndpoint: "https://script.google.com/macros/s/AKfycbyizAopBkbM-XJuK83JhaaAONmsvaAgszYU_KK6LcD7MInMEmCnLg0E1b9t5s1HaeFE-g/exec",
+  whatsappNumber: "201224283219",
+  // international format, no "+" or spaces (+20 12 24283219)
+  colors: {
+    background: "#F4F7FC",
+    // Mist Blue — soft page background (use "#FFFFFF" for pure white)
+    card: "#FFFFFF",
+    // cards
+    surface: "#F8FAFC",
+    // Cool Gray — inner panels
+    text: "#0F172A",
+    // Obsidian Slate
+    primary: "#1D4ED8",
+    // Electric Cobalt
+    highlight: "#059669"
+    // Mint Emerald
+  }
+};
+const CAR_MODELS = {
+  Toyota: ["Corolla", "Corolla Cross", "Yaris", "C-HR", "RAV4", "Rush", "Fortuner", "Camry", "Hilux", "Land Cruiser"],
+  Hyundai: ["i10", "Accent", "Elantra", "Bayon", "Creta", "Tucson", "Santa Fe"],
+  Kia: ["Picanto", "Pegas", "Cerato", "K5", "Sonet", "Seltos", "Sportage", "Sorento"],
+  Nissan: ["Sunny", "Sentra", "Juke", "Qashqai", "X-Trail", "Patrol"],
+  Chevrolet: ["Optra", "Groove", "Captiva", "Tracker"],
+  MG: ["MG5", "MG GT", "MG ZS", "MG RX5", "MG HS", "MG4", "MG One"],
+  Chery: ["Arrizo 5", "Tiggo 3", "Tiggo 4 Pro", "Tiggo 7 Pro", "Tiggo 8 Pro"],
+  Jetour: ["X70", "X70 Plus", "Dashing", "T2"],
+  BYD: ["F3", "Atto 3", "Song Plus", "Seal"],
+  Geely: ["Emgrand", "Coolray", "Tugella", "Monjaro"],
+  Haval: ["Jolion", "H6", "Dargo"],
+  Peugeot: ["208", "301", "2008", "3008", "408", "5008"],
+  Renault: ["Logan", "Sandero", "Stepway", "Kardian", "Duster", "Megane"],
+  Skoda: ["Fabia", "Kushaq", "Octavia", "Karoq", "Kodiaq", "Superb"],
+  Volkswagen: ["Polo", "Golf", "T-Roc", "Tiguan", "Passat", "ID.4"],
+  Suzuki: ["S-Presso", "Swift", "Dzire", "Ciaz", "Ertiga", "Fronx", "Vitara"],
+  Mitsubishi: ["Attrage", "Mirage", "Xpander", "Eclipse Cross", "Outlander", "Pajero Sport"],
+  BMW: ["1 Series", "2 Series", "3 Series", "5 Series", "X1", "X3", "X5"],
+  "Mercedes-Benz": ["A-Class", "C-Class", "E-Class", "GLA", "GLC", "GLE"]
+};
+const OTHER = "__other__";
+const DOCS = {
+  nid: { en: "National ID", ar: "\u0628\u0637\u0627\u0642\u0629 \u0627\u0644\u0631\u0642\u0645 \u0627\u0644\u0642\u0648\u0645\u064A" },
+  bank6salary: { en: "6-month bank statement showing salary", ar: "\u0643\u0634\u0641 \u062D\u0633\u0627\u0628 \u0628\u0646\u0643\u064A 6 \u0634\u0647\u0648\u0631 \u0645\u0648\u0636\u062D \u0628\u0647 \u0627\u0644\u0645\u0631\u062A\u0628" },
+  cr2: { en: "Commercial Register (2 years)", ar: "\u0633\u062C\u0644 \u062A\u062C\u0627\u0631\u064A (\u0633\u0646\u062A\u064A\u0646)" },
+  taxCard: { en: "Tax Card", ar: "\u0628\u0637\u0627\u0642\u0629 \u0636\u0631\u064A\u0628\u064A\u0629" },
+  bank6both: { en: "6-month personal & company bank statements", ar: "\u0643\u0634\u0641 \u062D\u0633\u0627\u0628 6 \u0634\u0647\u0648\u0631 \u0634\u062E\u0635\u064A \u0648\u0644\u0644\u0634\u0631\u0643\u0629" },
+  carLicenses: { en: "Car licenses", ar: "\u0631\u062E\u0635 \u0627\u0644\u0633\u064A\u0627\u0631\u0627\u062A" },
+  incomeProof: { en: "Proof of income", ar: "\u0625\u062B\u0628\u0627\u062A \u062F\u062E\u0644" },
+  higherDegree: { en: "Higher (university) degree", ar: "\u0645\u0624\u0647\u0644 \u0639\u0627\u0644\u064A" },
+  idProfession: { en: "Profession listed on the back of the National ID", ar: "\u0627\u0644\u0645\u0647\u0646\u0629 \u0645\u062F\u0648\u0646\u0629 \u0628\u0638\u0647\u0631 \u0627\u0644\u0628\u0637\u0627\u0642\u0629" },
+  homemakerStatus: { en: "Homemaker status (\u0631\u0628\u0629 \u0645\u0646\u0632\u0644)", ar: "\u0625\u062B\u0628\u0627\u062A \u0627\u0644\u062D\u0627\u0644\u0629: \u0631\u0628\u0629 \u0645\u0646\u0632\u0644" },
+  contractOrSlip: { en: "Employment contract or salary slip", ar: "\u0639\u0642\u062F \u0639\u0645\u0644 \u0623\u0648 \u0645\u0641\u0631\u062F\u0627\u062A \u0645\u0631\u062A\u0628" },
+  salaryAccount: { en: "Salary bank account statement (mandatory)", ar: "\u0643\u0634\u0641 \u062D\u0633\u0627\u0628 \u0628\u0646\u0643\u064A \u0644\u0644\u0645\u0631\u062A\u0628 (\u0625\u0644\u0632\u0627\u0645\u064A)" },
+  sameAsApplicable: { en: "Same documents / proof of income as applicable", ar: "\u0646\u0641\u0633 \u0627\u0644\u0645\u0633\u062A\u0646\u062F\u0627\u062A / \u0625\u062B\u0628\u0627\u062A \u062F\u062E\u0644 \u062D\u0633\u0628 \u0627\u0644\u062D\u0627\u0644\u0629" }
+};
+const BUSINESS_FULL = ["cr2", "taxCard", "bank6both", "carLicenses"];
+const PROGRAMS = [
+  { id: "AUTO 1", down: 0, inquiry: "homeWork", docs: { employee: ["nid", "bank6salary"], business: BUSINESS_FULL } },
+  {
+    id: "AUTO 2",
+    down: 15,
+    inquiry: "homeWork",
+    docs: { employee: ["nid", "bank6salary"], business: BUSINESS_FULL },
+    notes: {
+      employee: {
+        en: "Exceptions: Doctor, Pharmacist, Engineer, University Professor, Managers & Assistant Managers at major companies.",
+        ar: "\u0627\u0633\u062A\u062B\u0646\u0627\u0621\u0627\u062A: \u0637\u0628\u064A\u0628\u060C \u0635\u064A\u062F\u0644\u064A\u060C \u0645\u0647\u0646\u062F\u0633\u060C \u0623\u0633\u062A\u0627\u0630 \u062C\u0627\u0645\u0639\u064A\u060C \u0627\u0644\u0645\u062F\u064A\u0631\u064A\u0646 \u0648\u0645\u0633\u0627\u0639\u062F\u064A \u0627\u0644\u0645\u062F\u064A\u0631\u064A\u0646 \u0628\u0627\u0644\u0634\u0631\u0643\u0627\u062A \u0627\u0644\u0643\u0628\u0631\u0649."
+      }
+    }
+  },
+  {
+    id: "AUTO 3",
+    down: 15,
+    inquiry: "homeWork",
+    newOnly: true,
+    docs: { employee: ["nid", "bank6salary"], business: BUSINESS_FULL },
+    notes: { all: { en: "New cars only.", ar: "\u0644\u0644\u0639\u0631\u0628\u064A\u0627\u062A \u0627\u0644\u0632\u064A\u0631\u0648 \u0641\u0642\u0637." } }
+  },
+  { id: "AUTO 4", down: 25, inquiry: "homeWork", docs: { employee: ["nid"], business: ["nid"] } },
+  { id: "AUTO 5", down: 40, inquiry: "homeOnly", docs: { employee: ["nid", "incomeProof"], business: ["nid", "incomeProof"] } },
+  { id: "AUTO 6", down: 50, inquiry: "homeOnly", docs: { employee: ["nid", "higherDegree", "idProfession"], business: ["nid"] } },
+  { id: "AUTO 7", down: 30, inquiry: "homeOnly", docs: { homemaker: ["homemakerStatus"], business: ["nid", "incomeProof"] } },
+  { id: "AUTO 8", down: 30, inquiry: "homeOnly", docs: { abroad: ["contractOrSlip", "salaryAccount"], business: ["sameAsApplicable"] } }
+];
+const GENERAL_NOTES = [
+  { en: "Bank statement in EGP or transfers", ar: "\u0643\u0634\u0641 \u062D\u0633\u0627\u0628 \u0628\u0627\u0644\u0645\u0635\u0631\u064A \u0623\u0648 \u0627\u0644\u062A\u062D\u0648\u064A\u0644\u0627\u062A" },
+  { en: "Owned residence with a utility bill in the client's or spouse's name", ar: "\u0627\u0644\u0633\u0643\u0646 \u062A\u0645\u0644\u064A\u0643 \u0625\u064A\u0635\u0627\u0644 \u062E\u062F\u0645\u0627\u062A \u0628\u0627\u0633\u0645 \u0627\u0644\u0639\u0645\u064A\u0644 \u0623\u0648 \u0627\u0644\u0632\u0648\u062C\u0629" }
+];
+const SOURCES = [
+  { key: "dubizzle", en: "Dubizzle", ar: "\u062F\u0648\u0628\u064A\u0632\u0644", match: ["dubizzle", "olx"], where: ["used"] },
+  { key: "marketplace", en: "Facebook Marketplace", ar: "\u0641\u064A\u0633\u0628\u0648\u0643 \u0645\u0627\u0631\u0643\u062A \u0628\u0644\u064A\u0633", match: ["facebook", "fb.com", "fb.me"], where: ["used"] },
+  { key: "hatla2ee", en: "Hatla2ee", ar: "\u0647\u062A\u0644\u0627\u0642\u064A", match: ["hatla2ee"], where: ["used", "new"] },
+  { key: "showroom", en: "Showroom", ar: "\u0645\u0639\u0631\u0636", match: [], where: ["used", "new"] },
+  { key: "dealership", en: "Car dealership", ar: "\u062A\u0648\u0643\u064A\u0644 / \u0648\u0643\u064A\u0644", match: [], where: ["used", "new"] },
+  { key: "other", en: "Other", ar: "\u0623\u062E\u0631\u0649", match: [], where: ["used", "new"] }
+];
+const T = {
+  en: {
+    nav: { how: "How it works", calc: "Calculator", programs: "Programs" },
+    heroTag: "Auto-financing broker \xB7 Egypt",
+    heroTitle: "Any car. From anywhere. We buy it \u2014 you pay monthly.",
+    heroSub: "Found your car on Dubizzle, Facebook Marketplace or Hatla2ee, at a showroom, or at a car dealership? Send it to us \u2014 we buy it on your behalf and you pay in easy monthly installments.",
+    carsFrom: "Cars from",
+    getQuote: "Get my quote",
+    stats: { rate: "Fixed flat rate", limit: "Financing up to", tenor: "Tenor up to", down: "Down payment from" },
+    months: "months",
+    monthsShort: "mo",
+    egp: "EGP",
+    perMonth: "/ month",
+    how: [
+      { t: "Pick any car", d: "New or used \u2014 from any listing site, marketplace, showroom or dealership." },
+      { t: "We buy it for you", d: "Qestak checks the car and pays the seller directly." },
+      { t: "Drive & pay monthly", d: "Choose 12 to 60 months with a clear, fixed installment." }
+    ],
+    step1: "Your car",
+    step2: "Your installment",
+    step3: "Your profile & papers",
+    newCar: "New car",
+    usedCar: "Used car",
+    listing: "Listing link (optional)",
+    listingPh: "Paste a Dubizzle, Marketplace or Hatla2ee link\u2026",
+    detected: "Source",
+    source: "Where did you find the car?",
+    year: "Model year",
+    yearHint: "{from} \u2013 {to}",
+    brand: "Brand",
+    model: "Model",
+    chooseBrand: "Choose brand",
+    chooseModel: "Choose model",
+    chooseBrandFirst: "Choose a brand first",
+    otherBrand: "Other brand",
+    otherModel: "Other model",
+    typeBrand: "Type the brand",
+    typeModel: "Type the model",
+    price: "Car price",
+    priceRange: "From {min} to {max} EGP",
+    down: "Down payment",
+    tenor: "Tenor",
+    rate: "Annual flat interest rate",
+    rateFixed: "Fixed for all programs",
+    financed: "Financed amount",
+    monthly: "Monthly installment",
+    downAmt: "Down payment",
+    totalInterest: "Total interest",
+    totalPayable: "Total payable",
+    applicant: "I am a\u2026",
+    employee: "Employee",
+    business: "Business owner",
+    homemaker: "Homemaker",
+    abroad: "Working abroad",
+    special: "Special cases",
+    inquiry: "Inquiry",
+    homeWork: "Home + Work",
+    homeOnly: "Home only",
+    requiredDocs: "Required documents",
+    docsNote: "Our advisor will review these with you when we contact you.",
+    generalNotes: "General notes",
+    alsoEligible: "Also eligible:",
+    minDownNeeded: "This profile requires at least {d}% down payment.",
+    apply: "Apply {d}%",
+    allPrograms: "All programs",
+    notForYou: "Not available for this profile",
+    newOnlyHint: "New cars only",
+    summary: "Your quote",
+    callback: "Request a call back",
+    name: "Full name",
+    namePh: "Your name",
+    phone: "Mobile number",
+    phonePh: "01X XXXX XXXX",
+    requestCall: "Request a call",
+    sendWa: "Send my quote on WhatsApp",
+    copy: "Copy summary",
+    copied: "Copied!",
+    chatWa: "Chat with us on WhatsApp",
+    waGreeting: "Hello {brand}, I'd like to ask about car financing.",
+    invalidName: "Please enter your name.",
+    invalidPhone: "Enter a valid Egyptian mobile (11 digits, starts with 010/011/012/015).",
+    reqTitle: "One last step",
+    reqBody: "Tap the button below to send your call request to our team on WhatsApp. We'll call {name} on {phone}.",
+    sendCallWa: "Send call request on WhatsApp",
+    callIntro: "CALL BACK REQUEST \u2014 please call me about this quote:",
+    reqRef: "Reference",
+    sentTitle: "Request received",
+    sentBody: "Thank you, {name}! Our team will call you on {phone} shortly.",
+    sending: "Sending\u2026",
+    close: "Close",
+    indicative: "Figures are indicative and subject to credit approval and car inspection.",
+    footer: "Auto-financing brokerage. All rights reserved.",
+    carNotSet: "Not specified",
+    carLabel: "Car",
+    condition: "Condition",
+    listingLabel: "Listing",
+    waIntro: "Hello {brand}, I'd like an auto-financing quote:",
+    profileLabel: "Profile",
+    programLabel: "Program",
+    nameLabel: "Name",
+    phoneLabel: "Phone",
+    at: "at",
+    flat: "flat"
+  },
+  ar: {
+    nav: { how: "\u0625\u0632\u0627\u064A \u0628\u0646\u0634\u062A\u063A\u0644", calc: "\u0627\u0644\u062D\u0627\u0633\u0628\u0629", programs: "\u0627\u0644\u0628\u0631\u0627\u0645\u062C" },
+    heroTag: "\u0648\u0633\u064A\u0637 \u062A\u0645\u0648\u064A\u0644 \u0633\u064A\u0627\u0631\u0627\u062A \xB7 \u0645\u0635\u0631",
+    heroTitle: "\u0623\u064A \u0639\u0631\u0628\u064A\u0629. \u0645\u0646 \u0623\u064A \u0645\u0643\u0627\u0646. \u0625\u062D\u0646\u0627 \u0646\u0634\u062A\u0631\u064A\u0647\u0627 \u2014 \u0648\u0625\u0646\u062A \u062A\u0642\u0633\u0651\u0637.",
+    heroSub: "\u0644\u0642\u064A\u062A \u0639\u0631\u0628\u064A\u062A\u0643 \u0639\u0644\u0649 \u062F\u0648\u0628\u064A\u0632\u0644 \u0623\u0648 \u0641\u064A\u0633\u0628\u0648\u0643 \u0645\u0627\u0631\u0643\u062A \u0628\u0644\u064A\u0633 \u0623\u0648 \u0647\u062A\u0644\u0627\u0642\u064A\u060C \u0623\u0648 \u0641\u064A \u0645\u0639\u0631\u0636\u060C \u0623\u0648 \u0639\u0646\u062F \u062A\u0648\u0643\u064A\u0644\u061F \u0627\u0628\u0639\u062A\u0647\u0627\u0644\u0646\u0627 \u2014 \u0647\u0646\u0634\u062A\u0631\u064A\u0647\u0627 \u0628\u0627\u0644\u0646\u064A\u0627\u0628\u0629 \u0639\u0646\u0643 \u0648\u062A\u062F\u0641\u0639 \u0639\u0644\u0649 \u0623\u0642\u0633\u0627\u0637 \u0634\u0647\u0631\u064A\u0629 \u0645\u0631\u064A\u062D\u0629.",
+    carsFrom: "\u0639\u0631\u0628\u064A\u0627\u062A \u0645\u0646",
+    getQuote: "\u0627\u062D\u0633\u0628 \u0642\u0633\u0637\u0643",
+    stats: { rate: "\u0641\u0627\u064A\u062F\u0629 \u062B\u0627\u0628\u062A\u0629", limit: "\u062A\u0645\u0648\u064A\u0644 \u062D\u062A\u0649", tenor: "\u0645\u062F\u0629 \u062D\u062A\u0649", down: "\u0645\u0642\u062F\u0645 \u064A\u0628\u062F\u0623 \u0645\u0646" },
+    months: "\u0634\u0647\u0631",
+    monthsShort: "\u0634\u0647\u0631",
+    egp: "\u062C.\u0645",
+    perMonth: "/ \u0634\u0647\u0631\u064A\u064B\u0627",
+    how: [
+      { t: "\u0627\u062E\u062A\u0627\u0631 \u0623\u064A \u0639\u0631\u0628\u064A\u0629", d: "\u062C\u062F\u064A\u062F\u0629 \u0623\u0648 \u0645\u0633\u062A\u0639\u0645\u0644\u0629 \u2014 \u0645\u0646 \u0623\u064A \u0645\u0648\u0642\u0639 \u0623\u0648 \u0645\u0627\u0631\u0643\u062A \u0628\u0644\u064A\u0633 \u0623\u0648 \u0645\u0639\u0631\u0636 \u0623\u0648 \u062A\u0648\u0643\u064A\u0644." },
+      { t: "\u0625\u062D\u0646\u0627 \u0646\u0634\u062A\u0631\u064A\u0647\u0627 \u0644\u0643", d: "\u0642\u0633\u0637\u0643 \u0628\u062A\u0641\u062D\u0635 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0648\u0628\u062A\u062F\u0641\u0639 \u0644\u0644\u0628\u0627\u064A\u0639 \u0645\u0628\u0627\u0634\u0631\u0629." },
+      { t: "\u0627\u0631\u0643\u0628 \u0648\u0642\u0633\u0651\u0637", d: "\u0627\u062E\u062A\u0627\u0631 \u0645\u0646 12 \u0644\u0640 60 \u0634\u0647\u0631 \u0628\u0642\u0633\u0637 \u062B\u0627\u0628\u062A \u0648\u0648\u0627\u0636\u062D." }
+    ],
+    step1: "\u0639\u0631\u0628\u064A\u062A\u0643",
+    step2: "\u0642\u0633\u0637\u0643",
+    step3: "\u0628\u064A\u0627\u0646\u0627\u062A\u0643 \u0648\u0627\u0644\u0623\u0648\u0631\u0627\u0642",
+    newCar: "\u0639\u0631\u0628\u064A\u0629 \u062C\u062F\u064A\u062F\u0629",
+    usedCar: "\u0639\u0631\u0628\u064A\u0629 \u0645\u0633\u062A\u0639\u0645\u0644\u0629",
+    listing: "\u0644\u064A\u0646\u0643 \u0627\u0644\u0625\u0639\u0644\u0627\u0646 (\u0627\u062E\u062A\u064A\u0627\u0631\u064A)",
+    listingPh: "\u0627\u0644\u0635\u0642 \u0644\u064A\u0646\u0643 \u062F\u0648\u0628\u064A\u0632\u0644 \u0623\u0648 \u0645\u0627\u0631\u0643\u062A \u0628\u0644\u064A\u0633 \u0623\u0648 \u0647\u062A\u0644\u0627\u0642\u064A\u2026",
+    detected: "\u0627\u0644\u0645\u0635\u062F\u0631",
+    source: "\u0644\u0642\u064A\u062A \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0641\u064A\u0646\u061F",
+    year: "\u0633\u0646\u0629 \u0627\u0644\u0645\u0648\u062F\u064A\u0644",
+    yearHint: "{from} \u2013 {to}",
+    brand: "\u0627\u0644\u0645\u0627\u0631\u0643\u0629",
+    model: "\u0627\u0644\u0645\u0648\u062F\u064A\u0644",
+    chooseBrand: "\u0627\u062E\u062A\u0627\u0631 \u0627\u0644\u0645\u0627\u0631\u0643\u0629",
+    chooseModel: "\u0627\u062E\u062A\u0627\u0631 \u0627\u0644\u0645\u0648\u062F\u064A\u0644",
+    chooseBrandFirst: "\u0627\u062E\u062A\u0627\u0631 \u0627\u0644\u0645\u0627\u0631\u0643\u0629 \u0627\u0644\u0623\u0648\u0644",
+    otherBrand: "\u0645\u0627\u0631\u0643\u0629 \u0623\u062E\u0631\u0649",
+    otherModel: "\u0645\u0648\u062F\u064A\u0644 \u0622\u062E\u0631",
+    typeBrand: "\u0627\u0643\u062A\u0628 \u0627\u0644\u0645\u0627\u0631\u0643\u0629",
+    typeModel: "\u0627\u0643\u062A\u0628 \u0627\u0644\u0645\u0648\u062F\u064A\u0644",
+    price: "\u0633\u0639\u0631 \u0627\u0644\u0639\u0631\u0628\u064A\u0629",
+    priceRange: "\u0645\u0646 {min} \u0625\u0644\u0649 {max} \u062C.\u0645",
+    down: "\u0627\u0644\u0645\u0642\u062F\u0645",
+    tenor: "\u0627\u0644\u0645\u062F\u0629",
+    rate: "\u0627\u0644\u0641\u0627\u064A\u062F\u0629 \u0627\u0644\u0633\u0646\u0648\u064A\u0629 \u0627\u0644\u062B\u0627\u0628\u062A\u0629",
+    rateFixed: "\u062B\u0627\u0628\u062A\u0629 \u0644\u0643\u0644 \u0627\u0644\u0628\u0631\u0627\u0645\u062C",
+    financed: "\u0645\u0628\u0644\u063A \u0627\u0644\u062A\u0645\u0648\u064A\u0644",
+    monthly: "\u0627\u0644\u0642\u0633\u0637 \u0627\u0644\u0634\u0647\u0631\u064A",
+    downAmt: "\u0627\u0644\u0645\u0642\u062F\u0645",
+    totalInterest: "\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0641\u0648\u0627\u0626\u062F",
+    totalPayable: "\u0625\u062C\u0645\u0627\u0644\u064A \u0627\u0644\u0645\u062F\u0641\u0648\u0639",
+    applicant: "\u0623\u0646\u0627\u2026",
+    employee: "\u0645\u0648\u0638\u0641",
+    business: "\u0635\u0627\u062D\u0628 \u0639\u0645\u0644",
+    homemaker: "\u0631\u0628\u0629 \u0645\u0646\u0632\u0644",
+    abroad: "\u0639\u0627\u0645\u0644 \u0628\u0627\u0644\u062E\u0627\u0631\u062C",
+    special: "\u062D\u0627\u0644\u0627\u062A \u062E\u0627\u0635\u0629",
+    inquiry: "\u0627\u0644\u0627\u0633\u062A\u0639\u0644\u0627\u0645",
+    homeWork: "\u0633\u0643\u0646 + \u0639\u0645\u0644",
+    homeOnly: "\u0633\u0643\u0646 \u0641\u0642\u0637",
+    requiredDocs: "\u0627\u0644\u0623\u0648\u0631\u0627\u0642 \u0627\u0644\u0645\u0637\u0644\u0648\u0628\u0629",
+    docsNote: "\u0627\u0644\u0645\u0633\u062A\u0634\u0627\u0631 \u0647\u064A\u0631\u0627\u062C\u0639 \u0627\u0644\u0623\u0648\u0631\u0627\u0642 \u062F\u064A \u0645\u0639\u0627\u0643 \u0644\u0645\u0627 \u0646\u062A\u0648\u0627\u0635\u0644 \u0645\u0639\u0627\u0643.",
+    generalNotes: "\u0645\u0644\u0627\u062D\u0638\u0627\u062A \u0639\u0627\u0645\u0629",
+    alsoEligible: "\u0645\u062A\u0627\u062D \u0644\u0643 \u0643\u0645\u0627\u0646:",
+    minDownNeeded: "\u0627\u0644\u062D\u0627\u0644\u0629 \u062F\u064A \u0645\u062D\u062A\u0627\u062C\u0629 \u0645\u0642\u062F\u0645 {d}% \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644.",
+    apply: "\u0637\u0628\u0651\u0642 {d}%",
+    allPrograms: "\u0643\u0644 \u0627\u0644\u0628\u0631\u0627\u0645\u062C",
+    notForYou: "\u063A\u064A\u0631 \u0645\u062A\u0627\u062D \u0644\u0647\u0630\u0647 \u0627\u0644\u062D\u0627\u0644\u0629",
+    newOnlyHint: "\u0632\u064A\u0631\u0648 \u0641\u0642\u0637",
+    summary: "\u0639\u0631\u0636\u0643",
+    callback: "\u0627\u0637\u0644\u0628 \u0645\u0643\u0627\u0644\u0645\u0629",
+    name: "\u0627\u0644\u0627\u0633\u0645 \u0628\u0627\u0644\u0643\u0627\u0645\u0644",
+    namePh: "\u0627\u0633\u0645\u0643",
+    phone: "\u0631\u0642\u0645 \u0627\u0644\u0645\u0648\u0628\u0627\u064A\u0644",
+    phonePh: "01X XXXX XXXX",
+    requestCall: "\u0627\u0637\u0644\u0628 \u0645\u0643\u0627\u0644\u0645\u0629",
+    sendWa: "\u0627\u0628\u0639\u062A \u0639\u0631\u0636\u064A \u0639\u0644\u0649 \u0648\u0627\u062A\u0633\u0627\u0628",
+    copy: "\u0627\u0646\u0633\u062E \u0627\u0644\u0645\u0644\u062E\u0635",
+    copied: "\u0627\u062A\u0646\u0633\u062E!",
+    chatWa: "\u0643\u0644\u0645\u0646\u0627 \u0639\u0644\u0649 \u0648\u0627\u062A\u0633\u0627\u0628",
+    waGreeting: "\u0623\u0647\u0644\u0627\u064B {brand}\u060C \u0639\u0627\u064A\u0632 \u0623\u0633\u062A\u0641\u0633\u0631 \u0639\u0646 \u062A\u0645\u0648\u064A\u0644 \u0639\u0631\u0628\u064A\u0629.",
+    invalidName: "\u0645\u0646 \u0641\u0636\u0644\u0643 \u0627\u0643\u062A\u0628 \u0627\u0633\u0645\u0643.",
+    invalidPhone: "\u0627\u0643\u062A\u0628 \u0631\u0642\u0645 \u0645\u0648\u0628\u0627\u064A\u0644 \u0645\u0635\u0631\u064A \u0635\u062D\u064A\u062D (11 \u0631\u0642\u0645 \u064A\u0628\u062F\u0623 \u0628\u0640 010/011/012/015).",
+    reqTitle: "\u062E\u0637\u0648\u0629 \u0623\u062E\u064A\u0631\u0629",
+    reqBody: "\u0627\u0636\u063A\u0637 \u0627\u0644\u0632\u0631\u0627\u0631 \u0627\u0644\u0644\u064A \u062A\u062D\u062A \u0639\u0634\u0627\u0646 \u062A\u0628\u0639\u062A \u0637\u0644\u0628 \u0627\u0644\u0645\u0643\u0627\u0644\u0645\u0629 \u0644\u0641\u0631\u064A\u0642\u0646\u0627 \u0639\u0644\u0649 \u0648\u0627\u062A\u0633\u0627\u0628. \u0647\u0646\u0643\u0644\u0645 {name} \u0639\u0644\u0649 {phone}.",
+    sendCallWa: "\u0627\u0628\u0639\u062A \u0637\u0644\u0628 \u0627\u0644\u0645\u0643\u0627\u0644\u0645\u0629 \u0639\u0644\u0649 \u0648\u0627\u062A\u0633\u0627\u0628",
+    callIntro: "\u0637\u0644\u0628 \u0645\u0643\u0627\u0644\u0645\u0629 \u2014 \u0645\u0646 \u0641\u0636\u0644\u0643\u0645 \u0643\u0644\u0645\u0648\u0646\u064A \u0628\u062E\u0635\u0648\u0635 \u0627\u0644\u0639\u0631\u0636 \u062F\u0647:",
+    reqRef: "\u0631\u0642\u0645 \u0627\u0644\u0637\u0644\u0628",
+    sentTitle: "\u062A\u0645 \u0627\u0633\u062A\u0644\u0627\u0645 \u0637\u0644\u0628\u0643",
+    sentBody: "\u0634\u0643\u0631\u064B\u0627 \u064A\u0627 {name}! \u0641\u0631\u064A\u0642\u0646\u0627 \u0647\u064A\u0643\u0644\u0645\u0643 \u0639\u0644\u0649 {phone} \u0642\u0631\u064A\u0628\u064B\u0627.",
+    sending: "\u062C\u0627\u0631\u064A \u0627\u0644\u0625\u0631\u0633\u0627\u0644\u2026",
+    close: "\u0625\u063A\u0644\u0627\u0642",
+    indicative: "\u0627\u0644\u0623\u0631\u0642\u0627\u0645 \u0627\u0633\u062A\u0631\u0634\u0627\u062F\u064A\u0629 \u0648\u062A\u062E\u0636\u0639 \u0644\u0644\u0645\u0648\u0627\u0641\u0642\u0629 \u0627\u0644\u0627\u0626\u062A\u0645\u0627\u0646\u064A\u0629 \u0648\u0641\u062D\u0635 \u0627\u0644\u0639\u0631\u0628\u064A\u0629.",
+    footer: "\u0648\u0633\u0627\u0637\u0629 \u062A\u0645\u0648\u064A\u0644 \u0633\u064A\u0627\u0631\u0627\u062A. \u062C\u0645\u064A\u0639 \u0627\u0644\u062D\u0642\u0648\u0642 \u0645\u062D\u0641\u0648\u0638\u0629.",
+    carNotSet: "\u063A\u064A\u0631 \u0645\u062D\u062F\u062F",
+    carLabel: "\u0627\u0644\u0639\u0631\u0628\u064A\u0629",
+    condition: "\u0646\u0648\u0639 \u0627\u0644\u0639\u0631\u0628\u064A\u0629",
+    listingLabel: "\u0627\u0644\u0625\u0639\u0644\u0627\u0646",
+    waIntro: "\u0623\u0647\u0644\u0627\u064B {brand}\u060C \u0639\u0627\u064A\u0632 \u0639\u0631\u0636 \u062A\u0645\u0648\u064A\u0644 \u0639\u0631\u0628\u064A\u0629:",
+    profileLabel: "\u0627\u0644\u062D\u0627\u0644\u0629",
+    programLabel: "\u0627\u0644\u0628\u0631\u0646\u0627\u0645\u062C",
+    nameLabel: "\u0627\u0644\u0627\u0633\u0645",
+    phoneLabel: "\u0627\u0644\u0645\u0648\u0628\u0627\u064A\u0644",
+    at: "\u0628\u0641\u0627\u064A\u062F\u0629",
+    flat: "\u062B\u0627\u0628\u062A\u0629"
+  }
+};
+const themeCss = (c) => {
+  const r = (cls, body) => `.qestak.${cls},.qestak .${cls}{${body}}`;
+  return [
+    `.qestak{--bg:${c.background};--card:${c.card};--surface:${c.surface};--ink:${c.text};--primary:${c.primary};--hl:${c.highlight};color-scheme:light;color:var(--ink);background-color:var(--bg)}`,
+    `.qestak input,.qestak select,.qestak textarea{color:var(--ink)}`,
+    `.qestak input::placeholder{color:#94A3B8}`,
+    r("q-page", "background-color:var(--bg)"),
+    r("q-card", "background-color:var(--card)"),
+    r("q-surface", "background-color:var(--surface)"),
+    r("q-ink", "color:var(--ink)"),
+    r("q-bg-ink", "background-color:var(--ink);color:#fff"),
+    r("q-bg-primary", "background-color:var(--primary);color:#fff"),
+    r("q-text-primary", "color:var(--primary)"),
+    r("q-bg-hl", "background-color:var(--hl);color:#fff"),
+    r("q-text-hl", "color:var(--hl)"),
+    r("q-dot-hl", "background-color:var(--hl)"),
+    r("q-selected", "background-color:var(--primary);color:#fff;box-shadow:0 0 0 1px var(--primary),0 6px 16px -6px color-mix(in srgb,var(--primary) 55%,transparent)"),
+    r("q-soft-selected", "background-color:color-mix(in srgb,var(--primary) 10%,#fff);color:var(--primary);box-shadow:0 0 0 1.5px var(--primary)"),
+    r("q-option", "background-color:#fff;color:#334155;box-shadow:0 0 0 1px #E2E8F0"),
+    `.qestak .q-option:hover{box-shadow:0 0 0 1px #94A3B8}`,
+    r("q-option-muted", "background-color:#fff;color:#94A3B8;box-shadow:0 0 0 1px #E2E8F0"),
+    r("q-white", "background-color:#fff;color:var(--ink)"),
+    `.qestak .q-input:focus{border-color:var(--primary);box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 15%,transparent)}`,
+    r("q-range", "accent-color:var(--primary)"),
+    `.qestak .q-link:hover{color:var(--primary)}`,
+    `.qestak .q-btn:hover{filter:brightness(1.06)}`,
+    r("q-badge-hl", "background-color:color-mix(in srgb,var(--hl) 10%,#fff);color:var(--hl);box-shadow:0 0 0 1px color-mix(in srgb,var(--hl) 25%,#fff)"),
+    r("q-badge-primary", "background-color:color-mix(in srgb,var(--primary) 8%,#fff);color:var(--primary)"),
+    `.qestak[dir=rtl] .q-flip{transform:scaleX(-1)}`
+  ].join("\n");
+};
+const fmt = (n) => Math.round(n || 0).toLocaleString("en-US");
+const fill = (s, vars) => Object.entries(vars).reduce((acc, [k, v]) => acc.split(`{${k}}`).join(v), s);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const priceToSlider = (p) => Math.log(p / CONFIG.minPrice) / Math.log(CONFIG.maxLimit / CONFIG.minPrice) * 1e3;
+const sliderToPrice = (s) => {
+  const raw = CONFIG.minPrice * Math.pow(CONFIG.maxLimit / CONFIG.minPrice, s / 1e3);
+  const step = raw < 1e6 ? 5e3 : raw < 5e6 ? 25e3 : 1e5;
+  return clamp(Math.round(raw / step) * step, CONFIG.minPrice, CONFIG.maxLimit);
+};
+const detectSource = (url) => {
+  const u = (url || "").toLowerCase();
+  if (!u.trim()) return null;
+  const hit = SOURCES.find((s) => s.match.some((m) => u.includes(m)));
+  return hit ? hit.key : "other";
+};
+const formatPhone = (n) => {
+  const d = String(n).replace(/\D/g, "");
+  return d.startsWith("20") && d.length === 12 ? `+20 ${d.slice(2, 5)} ${d.slice(5, 8)} ${d.slice(8)}` : `+${d}`;
+};
+const isValidPhone = (p) => /^01[0125]\d{8}$/.test((p || "").replace(/[\s-]/g, ""));
+function matchProgram(applicant, down, carType, overrideId) {
+  const eligible = PROGRAMS.filter((p) => p.docs[applicant] && (!p.newOnly || carType === "new"));
+  const reachable = eligible.filter((p) => p.down <= down);
+  if (!reachable.length) {
+    const minDown = eligible.length ? Math.min(...eligible.map((p) => p.down)) : null;
+    return { program: null, alternatives: [], minDown };
+  }
+  const best = Math.max(...reachable.map((p) => p.down));
+  const ties = reachable.filter((p) => p.down === best);
+  const program = ties.find((p) => p.id === overrideId) || ties[0];
+  return { program, alternatives: ties.filter((p) => p.id !== program.id), minDown: null };
+}
+function Card({ children, id }) {
+  return /* @__PURE__ */ React.createElement("section", { id, className: "q-card q-ink rounded-3xl border border-slate-200/80 p-5 shadow-sm shadow-slate-900/[0.03] sm:p-6" }, children);
+}
+function StepHeader({ n, title, icon: Icon }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "mb-5 flex items-center gap-3" }, /* @__PURE__ */ React.createElement("span", { className: "q-bg-primary flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold" }, n), /* @__PURE__ */ React.createElement("h2", { className: "text-lg font-bold tracking-tight" }, title), Icon && /* @__PURE__ */ React.createElement(Icon, { className: "ms-auto h-5 w-5 text-slate-400" }));
+}
+function Segmented({ options, value, onChange }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "q-surface flex w-full rounded-2xl p-1 ring-1 ring-slate-200" }, options.map((o) => {
+    const Icon = o.icon;
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: o.value,
+        type: "button",
+        "aria-pressed": o.value === value,
+        onClick: () => onChange(o.value),
+        className: `flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition sm:text-base ${o.value === value ? "q-selected" : "text-slate-600 hover:bg-white"}`
+      },
+      Icon && /* @__PURE__ */ React.createElement(Icon, { className: "h-4 w-4" }),
+      o.label
+    );
+  }));
+}
+function Label({ children, hint }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "mb-2 flex items-baseline justify-between gap-2" }, /* @__PURE__ */ React.createElement("span", { className: "text-sm font-semibold text-slate-700" }, children), hint && /* @__PURE__ */ React.createElement("span", { className: "text-xs text-slate-500" }, hint));
+}
+const inputCls = "q-input q-white w-full rounded-xl border border-slate-200 px-4 py-3 text-[15px] outline-none transition placeholder:text-slate-400 disabled:bg-slate-50 disabled:text-slate-400";
+function Row({ label, value, strong }) {
+  return /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-3 py-2 text-sm" }, /* @__PURE__ */ React.createElement("span", { className: "shrink-0 text-slate-500" }, label), /* @__PURE__ */ React.createElement("span", { className: `min-w-0 truncate text-end tabular-nums ${strong ? "q-ink font-bold" : "font-semibold text-slate-700"}` }, value));
+}
+const WhatsAppIcon = ({ className }) => /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", className, fill: "currentColor", "aria-hidden": "true" }, /* @__PURE__ */ React.createElement("path", { d: "M17.47 14.38c-.3-.15-1.75-.86-2.02-.96-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.64.07-.3-.15-1.25-.46-2.38-1.47-.88-.79-1.47-1.76-1.65-2.05-.17-.3-.02-.46.13-.6.13-.14.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.03-.52-.07-.15-.67-1.6-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.79.37-.27.3-1.04 1.02-1.04 2.48 0 1.46 1.07 2.88 1.21 3.07.15.2 2.1 3.2 5.08 4.49.71.31 1.26.49 1.7.63.71.22 1.36.19 1.87.12.57-.09 1.75-.72 2-1.41.25-.7.25-1.29.17-1.41-.07-.13-.27-.2-.57-.35M12.05 21.5h-.01a9.43 9.43 0 0 1-4.81-1.32l-.34-.2-3.58.94.96-3.49-.23-.36a9.4 9.4 0 0 1-1.44-5.02c0-5.2 4.24-9.44 9.46-9.44a9.4 9.4 0 0 1 9.44 9.45c0 5.2-4.24 9.44-9.45 9.44M20.1 3.9A11.32 11.32 0 0 0 12.05.55C5.77.55.66 5.66.66 11.94c0 2 .52 3.96 1.52 5.69L.56 23.5l6.03-1.58a11.4 11.4 0 0 0 5.45 1.39h.01c6.28 0 11.39-5.11 11.39-11.39 0-3.04-1.18-5.9-3.34-8.05" }));
+function QestakApp() {
+  const [lang, setLang] = useState("en");
+  const t = T[lang];
+  const isAr = lang === "ar";
+  const brand = isAr ? CONFIG.brandNameAr : CONFIG.brandNameEn;
+  const L = (obj) => obj ? obj[lang] : "";
+  const [carType, setCarType] = useState("used");
+  const [listingUrl, setListingUrl] = useState("");
+  const [manualSource, setManualSource] = useState(null);
+  const [year, setYear] = useState(2021);
+  const [carBrand, setCarBrand] = useState("");
+  const [carBrandOther, setCarBrandOther] = useState("");
+  const [carModel, setCarModel] = useState("");
+  const [carModelOther, setCarModelOther] = useState("");
+  const rate = CONFIG.interestRate;
+  const [price, setPrice] = useState(CONFIG.defaultPrice);
+  const [priceText, setPriceText] = useState(fmt(CONFIG.defaultPrice));
+  const [down, setDown] = useState(CONFIG.defaultDownPayment);
+  const [tenor, setTenor] = useState(CONFIG.defaultTenor);
+  const [applicant, setApplicant] = useState("employee");
+  const [overrideId, setOverrideId] = useState(null);
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [errors, setErrors] = useState({});
+  const [request, setRequest] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
+  const availableSources = SOURCES.filter((s) => s.where.includes(carType));
+  const autoSource = carType === "used" ? detectSource(listingUrl) : null;
+  const pickedSource = availableSources.some((s) => s.key === manualSource) ? manualSource : null;
+  const source = pickedSource || autoSource || (carType === "new" ? "dealership" : null);
+  const sourceObj = SOURCES.find((s) => s.key === source);
+  const models = carBrand && carBrand !== OTHER ? CAR_MODELS[carBrand] || [] : [];
+  const brandName = carBrand === OTHER ? carBrandOther.trim() : carBrand;
+  const modelName = carBrand === OTHER || carModel === OTHER ? carModelOther.trim() : carModel;
+  const calc = useMemo(() => {
+    const downAmount = price * down / 100;
+    const financed = Math.min(price - downAmount, CONFIG.maxLimit);
+    const interest = financed * (rate / 100) * (tenor / 12);
+    const total = financed + interest;
+    return { downAmount, financed, interest, total, monthly: tenor ? total / tenor : 0 };
+  }, [price, down, tenor, rate]);
+  const { program, alternatives, minDown } = matchProgram(applicant, down, carType, overrideId);
+  const docKeys = program ? program.docs[applicant] : [];
+  const programNote = program && program.notes ? program.notes[applicant] || program.notes.all : null;
+  const applicantLabel = t[applicant];
+  const carDescription = [brandName, modelName, carType === "used" ? year : null].filter(Boolean).join(" ");
+  const commitPriceText = () => {
+    const n = parseInt(priceText.replace(/[^\d]/g, ""), 10);
+    const v = clamp(isNaN(n) ? CONFIG.minPrice : n, CONFIG.minPrice, CONFIG.maxLimit);
+    setPrice(v);
+    setPriceText(fmt(v));
+  };
+  const setPriceBoth = (v) => {
+    setPrice(v);
+    setPriceText(fmt(v));
+  };
+  const chooseBrand = (b) => {
+    setCarBrand(b);
+    setCarModel("");
+    setCarModelOther("");
+  };
+  const chooseApplicant = (a) => {
+    setApplicant(a);
+    const min = Math.min(...PROGRAMS.filter((p) => p.docs[a]).map((p) => p.down));
+    if (down < min) setDown(min);
+  };
+  const chooseProgram = (p) => {
+    setDown(p.down);
+    if (!p.docs[applicant]) chooseApplicant(Object.keys(p.docs)[0]);
+    if (p.newOnly) setCarType("new");
+    setOverrideId(p.id);
+  };
+  const buildSummary = (kind = "quote", ref = null) => {
+    const lines = [
+      kind === "call" ? `${t.callIntro}${ref ? ` (${t.reqRef}: ${ref})` : ""}` : fill(t.waIntro, { brand }),
+      `\u2022 ${t.condition}: ${carType === "new" ? t.newCar : t.usedCar}`,
+      `\u2022 ${t.carLabel}: ${carDescription || t.carNotSet}`,
+      carType === "used" && listingUrl ? `\u2022 ${t.listingLabel}: ${listingUrl}` : null,
+      sourceObj ? `\u2022 ${t.detected}: ${L(sourceObj)}` : null,
+      `\u2022 ${t.price}: ${fmt(price)} ${t.egp}`,
+      `\u2022 ${t.downAmt}: ${down}% (${fmt(calc.downAmount)} ${t.egp})`,
+      `\u2022 ${t.financed}: ${fmt(calc.financed)} ${t.egp}`,
+      `\u2022 ${t.tenor}: ${tenor} ${t.months} ${t.at} ${rate}% ${t.flat}`,
+      `\u2022 ${t.monthly}: ${fmt(calc.monthly)} ${t.egp}`,
+      `\u2022 ${t.profileLabel}: ${applicantLabel}`,
+      program ? `\u2022 ${t.programLabel}: ${program.id} (${t.inquiry}: ${t[program.inquiry]})` : null,
+      name ? `\u2022 ${t.nameLabel}: ${name}` : null,
+      phone ? `\u2022 ${t.phoneLabel}: ${phone}` : null
+    ];
+    return lines.filter(Boolean).join("\n");
+  };
+  const waBase = `https://wa.me/${CONFIG.whatsappNumber}?text=`;
+  const waQuoteLink = waBase + encodeURIComponent(buildSummary());
+  const waChatLink = waBase + encodeURIComponent(fill(t.waGreeting, { brand }));
+  const validate = () => {
+    const e = {};
+    if (!name.trim()) e.name = t.invalidName;
+    if (!isValidPhone(phone)) e.phone = t.invalidPhone;
+    setErrors(e);
+    return !Object.keys(e).length;
+  };
+  const handleRequestCall = async (ev) => {
+    ev.preventDefault();
+    if (!validate() || sending) return;
+    const ref = "QS-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+    const summary = buildSummary("call", ref);
+    const waFallback = waBase + encodeURIComponent(summary);
+    if (!CONFIG.leadEndpoint) {
+      setRequest({ ref, summary, link: waFallback, sent: false });
+      return;
+    }
+    const lead = {
+      ref,
+      honeypot,
+      lang,
+      name: name.trim(),
+      phone: phone.replace(/[\s-]/g, ""),
+      condition: carType === "new" ? "New" : "Used",
+      car: carDescription,
+      source: sourceObj ? sourceObj.en : "",
+      listing: carType === "used" ? listingUrl : "",
+      price,
+      downPct: down,
+      downAmount: Math.round(calc.downAmount),
+      financed: Math.round(calc.financed),
+      tenor,
+      rate,
+      monthly: Math.round(calc.monthly),
+      profile: T.en[applicant],
+      program: program ? program.id : "",
+      inquiry: program ? T.en[program.inquiry] : "",
+      summary
+    };
+    setSending(true);
+    try {
+      await fetch(CONFIG.leadEndpoint, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(lead) });
+      setRequest({ ref, summary, sent: true });
+    } catch (_) {
+      setRequest({ ref, summary, link: waFallback, sent: false });
+    } finally {
+      setSending(false);
+    }
+  };
+  const copySummary = async () => {
+    try {
+      await navigator.clipboard.writeText(buildSummary());
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch (_) {
+    }
+  };
+  const years = [];
+  for (let y = CONFIG.modelYearTo; y >= CONFIG.modelYearFrom; y--) years.push(y);
+  const opt = (active) => active ? "q-selected" : "q-option";
+  return /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      dir: isAr ? "rtl" : "ltr",
+      lang,
+      className: "qestak q-page q-ink min-h-screen antialiased",
+      style: { fontFamily: isAr ? "'IBM Plex Sans Arabic', 'Cairo', system-ui, sans-serif" : "'Inter', system-ui, sans-serif" }
+    },
+    /* @__PURE__ */ React.createElement("style", null, themeCss(CONFIG.colors)),
+    /* @__PURE__ */ React.createElement("header", { className: "sticky top-0 z-30 border-b border-slate-200/70 bg-white/90 backdrop-blur" }, /* @__PURE__ */ React.createElement("div", { className: "mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6" }, /* @__PURE__ */ React.createElement("a", { href: "#top", className: "flex items-center gap-2.5" }, /* @__PURE__ */ React.createElement("span", { className: "q-bg-primary flex h-10 w-10 items-center justify-center rounded-2xl shadow-sm" }, /* @__PURE__ */ React.createElement(Car, { className: "h-5 w-5" })), /* @__PURE__ */ React.createElement("span", { className: "leading-tight" }, /* @__PURE__ */ React.createElement("span", { className: "block text-lg font-extrabold tracking-tight" }, brand), /* @__PURE__ */ React.createElement("span", { className: "block text-[11px] font-medium text-slate-500" }, isAr ? CONFIG.brandNameEn : CONFIG.brandNameAr))), /* @__PURE__ */ React.createElement("nav", { className: "ms-6 hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex" }, /* @__PURE__ */ React.createElement("a", { href: "#how", className: "q-link" }, t.nav.how), /* @__PURE__ */ React.createElement("a", { href: "#calculator", className: "q-link" }, t.nav.calc), /* @__PURE__ */ React.createElement("a", { href: "#programs", className: "q-link" }, t.nav.programs)), /* @__PURE__ */ React.createElement("div", { className: "ms-auto flex items-center gap-2" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center rounded-xl bg-slate-100 p-1 text-sm font-semibold", role: "group", "aria-label": "Language" }, /* @__PURE__ */ React.createElement(Languages, { className: "mx-1.5 h-4 w-4 text-slate-500" }), [["en", "EN"], ["ar", "\u0639\u0631\u0628\u064A"]].map(([k, lbl]) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: k,
+        onClick: () => setLang(k),
+        "aria-pressed": lang === k,
+        className: `rounded-lg px-3 py-1.5 transition ${lang === k ? "q-bg-primary shadow-sm" : "text-slate-500 hover:text-slate-800"}`
+      },
+      lbl
+    ))), /* @__PURE__ */ React.createElement("a", { href: waChatLink, target: "_blank", rel: "noreferrer", className: "q-bg-hl q-btn hidden items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold sm:flex" }, /* @__PURE__ */ React.createElement(WhatsAppIcon, { className: "h-4 w-4" }), " WhatsApp")))),
+    /* @__PURE__ */ React.createElement("section", { id: "top", className: "q-page relative overflow-hidden" }, /* @__PURE__ */ React.createElement("div", { className: "pointer-events-none absolute -top-40 end-[-10%] h-[520px] w-[520px] rounded-full bg-blue-200/40 blur-3xl" }), /* @__PURE__ */ React.createElement("div", { className: "relative mx-auto grid max-w-7xl gap-10 px-4 pb-10 pt-12 sm:px-6 lg:grid-cols-[1.2fr_1fr] lg:pt-16" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { className: "q-badge-hl inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold" }, t.heroTag), /* @__PURE__ */ React.createElement("h1", { className: "mt-4 text-4xl font-extrabold leading-[1.15] tracking-tight sm:text-5xl" }, t.heroTitle), /* @__PURE__ */ React.createElement("p", { className: "mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg" }, t.heroSub), /* @__PURE__ */ React.createElement("div", { className: "mt-5 flex flex-wrap items-center gap-2" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs font-semibold text-slate-500" }, t.carsFrom, ":"), SOURCES.filter((s) => s.key !== "other").map((s) => /* @__PURE__ */ React.createElement("span", { key: s.key, className: "inline-flex items-center gap-1.5 q-white rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 ring-1 ring-slate-200" }, /* @__PURE__ */ React.createElement("span", { className: "q-dot-hl h-1.5 w-1.5 rounded-full" }), " ", L(s)))), /* @__PURE__ */ React.createElement("div", { className: "mt-7 flex flex-wrap gap-3" }, /* @__PURE__ */ React.createElement("a", { href: "#calculator", className: "q-bg-primary q-btn inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 font-semibold shadow-lg shadow-blue-600/20" }, t.getQuote, " ", /* @__PURE__ */ React.createElement(ArrowRight, { className: "q-flip h-4 w-4" })), /* @__PURE__ */ React.createElement("a", { href: waChatLink, target: "_blank", rel: "noreferrer", className: "q-white inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 font-semibold ring-1 ring-slate-200 hover:ring-slate-300" }, /* @__PURE__ */ React.createElement(WhatsAppIcon, { className: "q-text-hl h-5 w-5" }), " ", t.chatWa))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-3 self-end" }, [
+      { icon: Percent, k: "rate", v: `${CONFIG.interestRate}%` },
+      { icon: Wallet, k: "limit", v: `${fmt(CONFIG.maxLimit / 1e6)}M ${t.egp}` },
+      { icon: Clock, k: "tenor", v: `${Math.max(...CONFIG.tenors)} ${t.months}` },
+      { icon: BadgeCheck, k: "down", v: `${Math.min(...CONFIG.downPaymentOptions)}%` }
+    ].map(({ icon: Icon, k, v }) => /* @__PURE__ */ React.createElement("div", { key: k, className: "q-white rounded-3xl border border-slate-200 p-5 shadow-sm" }, /* @__PURE__ */ React.createElement(Icon, { className: "q-text-primary h-5 w-5" }), /* @__PURE__ */ React.createElement("div", { className: "mt-3 text-xs font-medium text-slate-500" }, t.stats[k]), /* @__PURE__ */ React.createElement("div", { className: "mt-1 text-2xl font-extrabold tracking-tight tabular-nums" }, v)))))),
+    /* @__PURE__ */ React.createElement("section", { id: "how", className: "mx-auto max-w-7xl px-4 pb-4 sm:px-6" }, /* @__PURE__ */ React.createElement("div", { className: "grid gap-3 sm:grid-cols-3" }, t.how.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i, className: "flex gap-4 q-white rounded-3xl p-5 ring-1 ring-slate-200/70" }, /* @__PURE__ */ React.createElement("span", { className: "q-badge-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-base font-extrabold" }, i + 1), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "font-bold" }, s.t), /* @__PURE__ */ React.createElement("div", { className: "mt-1 text-sm leading-relaxed text-slate-600" }, s.d)))))),
+    /* @__PURE__ */ React.createElement("main", { id: "calculator", className: "mx-auto grid max-w-7xl gap-6 px-4 py-8 pb-32 sm:px-6 lg:grid-cols-[1fr_400px] lg:pb-12" }, /* @__PURE__ */ React.createElement("div", { className: "space-y-6" }, /* @__PURE__ */ React.createElement(Card, null, /* @__PURE__ */ React.createElement(StepHeader, { n: 1, title: t.step1, icon: Car }), /* @__PURE__ */ React.createElement(
+      Segmented,
+      {
+        value: carType,
+        onChange: (v) => {
+          setCarType(v);
+          setManualSource(null);
+        },
+        options: [{ value: "new", label: t.newCar, icon: BadgeCheck }, { value: "used", label: t.usedCar, icon: Car }]
+      }
+    ), /* @__PURE__ */ React.createElement("div", { className: "mt-5 grid gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "grid gap-4 sm:grid-cols-2" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Label, null, t.brand), /* @__PURE__ */ React.createElement("select", { value: carBrand, onChange: (e) => chooseBrand(e.target.value), className: `${inputCls} appearance-none` }, /* @__PURE__ */ React.createElement("option", { value: "" }, t.chooseBrand), Object.keys(CAR_MODELS).map((b) => /* @__PURE__ */ React.createElement("option", { key: b, value: b }, b)), /* @__PURE__ */ React.createElement("option", { value: OTHER }, t.otherBrand)), carBrand === OTHER && /* @__PURE__ */ React.createElement("input", { value: carBrandOther, onChange: (e) => setCarBrandOther(e.target.value), placeholder: t.typeBrand, className: `${inputCls} mt-2` })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Label, { hint: models.length ? `${models.length}` : null }, t.model), carBrand === OTHER ? /* @__PURE__ */ React.createElement("input", { value: carModelOther, onChange: (e) => setCarModelOther(e.target.value), placeholder: t.typeModel, className: inputCls }) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("select", { value: carModel, disabled: !carBrand, onChange: (e) => setCarModel(e.target.value), className: `${inputCls} appearance-none` }, /* @__PURE__ */ React.createElement("option", { value: "" }, carBrand ? t.chooseModel : t.chooseBrandFirst), models.map((m) => /* @__PURE__ */ React.createElement("option", { key: m, value: m }, m)), carBrand && /* @__PURE__ */ React.createElement("option", { value: OTHER }, t.otherModel)), carModel === OTHER && /* @__PURE__ */ React.createElement("input", { value: carModelOther, onChange: (e) => setCarModelOther(e.target.value), placeholder: t.typeModel, className: `${inputCls} mt-2` })))), carType === "used" && /* @__PURE__ */ React.createElement("div", { className: "grid gap-4 sm:grid-cols-[1fr_200px]" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Label, null, t.listing), /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement(Link2, { className: "pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" }), /* @__PURE__ */ React.createElement("input", { dir: "ltr", value: listingUrl, onChange: (e) => {
+      setListingUrl(e.target.value);
+      setManualSource(null);
+    }, placeholder: t.listingPh, className: `${inputCls} ps-11 ${isAr ? "text-right" : ""}` }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Label, { hint: fill(t.yearHint, { from: CONFIG.modelYearFrom, to: CONFIG.modelYearTo }) }, t.year), /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement(Calendar, { className: "pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" }), /* @__PURE__ */ React.createElement("select", { value: year, onChange: (e) => setYear(+e.target.value), className: `${inputCls} appearance-none ps-11` }, years.map((y) => /* @__PURE__ */ React.createElement("option", { key: y, value: y }, y)))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(Label, null, t.source), /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap gap-2" }, availableSources.map((s) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: s.key,
+        type: "button",
+        "aria-pressed": source === s.key,
+        onClick: () => setManualSource(s.key),
+        className: `rounded-xl px-3.5 py-2 text-sm font-semibold transition ${source === s.key ? "q-soft-selected" : "q-option"}`
+      },
+      L(s)
+    )))))), /* @__PURE__ */ React.createElement(Card, null, /* @__PURE__ */ React.createElement(StepHeader, { n: 2, title: t.step2, icon: Calculator }), /* @__PURE__ */ React.createElement(Label, { hint: fill(t.priceRange, { min: fmt(CONFIG.minPrice), max: fmt(CONFIG.maxLimit) }) }, t.price), /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        inputMode: "numeric",
+        dir: "ltr",
+        value: priceText,
+        onChange: (e) => {
+          const digits = e.target.value.replace(/[^\d]/g, "");
+          setPriceText(digits ? fmt(+digits) : "");
+          const n = +digits;
+          if (n >= CONFIG.minPrice && n <= CONFIG.maxLimit) setPrice(n);
+        },
+        onBlur: commitPriceText,
+        className: `${inputCls} pe-16 text-2xl font-bold tabular-nums ${isAr ? "text-right" : ""}`
+      }
+    ), /* @__PURE__ */ React.createElement("span", { className: "pointer-events-none absolute end-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400" }, t.egp)), /* @__PURE__ */ React.createElement("input", { type: "range", min: 0, max: 1e3, step: 1, value: priceToSlider(price), onChange: (e) => setPriceBoth(sliderToPrice(+e.target.value)), className: "q-range mt-4 w-full" }), /* @__PURE__ */ React.createElement("div", { className: "mt-1 flex justify-between text-[11px] font-medium text-slate-400 tabular-nums" }, /* @__PURE__ */ React.createElement("span", null, fmt(CONFIG.minPrice)), /* @__PURE__ */ React.createElement("span", null, fmt(CONFIG.maxLimit))), /* @__PURE__ */ React.createElement("div", { className: "mt-6" }, /* @__PURE__ */ React.createElement(Label, { hint: `${fmt(calc.downAmount)} ${t.egp}` }, t.down, " \xB7 ", /* @__PURE__ */ React.createElement("span", { className: "q-text-primary" }, down, "%")), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-3 gap-2 sm:grid-cols-6" }, CONFIG.downPaymentOptions.map((d) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: d,
+        type: "button",
+        "aria-pressed": down === d,
+        onClick: () => setDown(d),
+        className: `rounded-xl py-2.5 text-sm font-bold tabular-nums transition ${opt(down === d)}`
+      },
+      d,
+      "%"
+    ))), /* @__PURE__ */ React.createElement("input", { type: "range", min: 0, max: CONFIG.maxDownPayment, step: 1, value: down, onChange: (e) => setDown(+e.target.value), className: "q-range mt-4 w-full" })), /* @__PURE__ */ React.createElement("div", { className: "mt-6" }, /* @__PURE__ */ React.createElement(Label, null, t.tenor), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-5 gap-2" }, CONFIG.tenors.map((m) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: m,
+        type: "button",
+        "aria-pressed": tenor === m,
+        onClick: () => setTenor(m),
+        className: `rounded-xl py-2.5 text-sm font-bold transition ${opt(tenor === m)}`
+      },
+      /* @__PURE__ */ React.createElement("span", { className: "tabular-nums" }, m),
+      " ",
+      /* @__PURE__ */ React.createElement("span", { className: "text-xs font-medium opacity-80" }, t.monthsShort)
+    )))), /* @__PURE__ */ React.createElement("div", { className: "q-surface q-ink mt-6 flex items-center justify-between gap-4 rounded-2xl p-4 ring-1 ring-slate-200" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "text-sm font-semibold text-slate-700" }, t.rate), /* @__PURE__ */ React.createElement("div", { className: "text-xs text-slate-500" }, t.rateFixed)), /* @__PURE__ */ React.createElement("span", { className: "q-badge-primary rounded-xl px-3 py-1.5 text-lg font-extrabold tabular-nums", dir: "ltr" }, rate, "%")), /* @__PURE__ */ React.createElement("div", { className: "mt-6 grid gap-3 sm:grid-cols-2" }, /* @__PURE__ */ React.createElement("div", { className: "q-surface q-ink rounded-2xl p-4 ring-1 ring-slate-200" }, /* @__PURE__ */ React.createElement("div", { className: "text-xs font-medium text-slate-500" }, t.financed), /* @__PURE__ */ React.createElement("div", { className: "mt-1 text-2xl font-extrabold tabular-nums" }, fmt(calc.financed), " ", /* @__PURE__ */ React.createElement("span", { className: "text-sm font-semibold text-slate-400" }, t.egp))), /* @__PURE__ */ React.createElement("div", { className: "q-bg-primary rounded-2xl p-4" }, /* @__PURE__ */ React.createElement("div", { className: "text-xs font-medium opacity-80" }, t.monthly), /* @__PURE__ */ React.createElement("div", { className: "mt-1 text-2xl font-extrabold tabular-nums" }, fmt(calc.monthly), " ", /* @__PURE__ */ React.createElement("span", { className: "text-sm font-semibold opacity-75" }, t.egp))))), /* @__PURE__ */ React.createElement(Card, { id: "programs" }, /* @__PURE__ */ React.createElement(StepHeader, { n: 3, title: t.step3, icon: ShieldCheck }), /* @__PURE__ */ React.createElement(Label, null, t.applicant), /* @__PURE__ */ React.createElement(
+      Segmented,
+      {
+        value: ["employee", "business"].includes(applicant) ? applicant : null,
+        onChange: chooseApplicant,
+        options: [{ value: "employee", label: t.employee, icon: Briefcase }, { value: "business", label: t.business, icon: Building2 }]
+      }
+    ), /* @__PURE__ */ React.createElement("div", { className: "mt-3 flex flex-wrap items-center gap-2" }, /* @__PURE__ */ React.createElement("span", { className: "text-xs font-semibold text-slate-500" }, t.special, ":"), [{ k: "homemaker", icon: Home }, { k: "abroad", icon: Plane }].map(({ k, icon: Icon }) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: k,
+        type: "button",
+        "aria-pressed": applicant === k,
+        onClick: () => chooseApplicant(k),
+        className: `inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold transition ${opt(applicant === k)}`
+      },
+      /* @__PURE__ */ React.createElement(Icon, { className: "h-4 w-4" }),
+      " ",
+      t[k]
+    ))), program ? /* @__PURE__ */ React.createElement("div", { className: "q-surface q-ink mt-6 rounded-2xl p-5 ring-1 ring-slate-200" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap items-center gap-3" }, /* @__PURE__ */ React.createElement("span", { className: "q-bg-primary inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-base font-extrabold tracking-wide", dir: "ltr" }, /* @__PURE__ */ React.createElement(BadgeCheck, { className: "h-5 w-5" }), " ", program.id), /* @__PURE__ */ React.createElement("span", { className: "q-badge-hl inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold" }, /* @__PURE__ */ React.createElement(Search, { className: "h-4 w-4" }), " ", t.inquiry, ": ", t[program.inquiry]), /* @__PURE__ */ React.createElement("span", { className: "rounded-xl bg-white px-3 py-2 text-sm font-semibold text-slate-600 ring-1 ring-slate-200" }, t.down, " ", program.down, "%")), alternatives.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "mt-3 flex flex-wrap items-center gap-2 text-sm" }, /* @__PURE__ */ React.createElement("span", { className: "text-slate-500" }, t.alsoEligible), alternatives.map((a) => /* @__PURE__ */ React.createElement("button", { key: a.id, type: "button", onClick: () => setOverrideId(a.id), className: "q-option rounded-lg px-2.5 py-1 font-bold", dir: "ltr" }, a.id))), /* @__PURE__ */ React.createElement("h3", { className: "mt-5 flex items-center gap-2 font-bold" }, /* @__PURE__ */ React.createElement(FileText, { className: "q-text-primary h-4 w-4" }), " ", t.requiredDocs), /* @__PURE__ */ React.createElement("ul", { className: "mt-3 space-y-2" }, docKeys.map((k) => /* @__PURE__ */ React.createElement("li", { key: k, className: "flex items-center gap-3 q-white rounded-xl px-3.5 py-3 ring-1 ring-slate-200" }, /* @__PURE__ */ React.createElement(CheckCircle2, { className: "q-text-hl h-4 w-4 shrink-0" }), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-medium" }, L(DOCS[k]))))), programNote && /* @__PURE__ */ React.createElement("p", { className: "q-badge-primary mt-3 flex gap-2 rounded-xl px-3 py-2.5 text-sm" }, /* @__PURE__ */ React.createElement(Info, { className: "mt-0.5 h-4 w-4 shrink-0" }), " ", L(programNote)), /* @__PURE__ */ React.createElement("p", { className: "mt-3 text-xs text-slate-500" }, t.docsNote), /* @__PURE__ */ React.createElement("div", { className: "mt-5 border-t border-slate-200 pt-4" }, /* @__PURE__ */ React.createElement("h4", { className: "text-xs font-bold uppercase tracking-wider text-slate-500" }, t.generalNotes), /* @__PURE__ */ React.createElement("ul", { className: "mt-2 space-y-1.5" }, GENERAL_NOTES.map((n, i) => /* @__PURE__ */ React.createElement("li", { key: i, className: "flex gap-2 text-sm text-slate-600" }, /* @__PURE__ */ React.createElement("span", { className: "q-dot-hl mt-2 h-1.5 w-1.5 shrink-0 rounded-full" }), /* @__PURE__ */ React.createElement("span", null, L(n), !isAr && /* @__PURE__ */ React.createElement("span", { className: "block text-xs text-slate-400", dir: "rtl" }, n.ar))))))) : /* @__PURE__ */ React.createElement("div", { className: "mt-6 flex flex-wrap items-center gap-3 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-200" }, /* @__PURE__ */ React.createElement(Info, { className: "h-5 w-5" }), /* @__PURE__ */ React.createElement("span", { className: "flex-1" }, fill(t.minDownNeeded, { d: minDown })), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setDown(minDown), className: "rounded-xl bg-amber-900 px-3 py-2 font-semibold text-white" }, fill(t.apply, { d: minDown }))), /* @__PURE__ */ React.createElement("div", { className: "mt-6" }, /* @__PURE__ */ React.createElement(Label, null, t.allPrograms), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 gap-2 sm:grid-cols-4" }, PROGRAMS.map((p) => {
+      const active = program && program.id === p.id;
+      const fits = !!p.docs[applicant];
+      const tag = p.newOnly ? t.newOnlyHint : p.docs.homemaker ? t.homemaker : p.docs.abroad ? t.abroad : null;
+      return /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: p.id,
+          type: "button",
+          "aria-pressed": !!active,
+          onClick: () => chooseProgram(p),
+          title: fits ? "" : t.notForYou,
+          className: `rounded-2xl p-3 text-start transition ${active ? "q-selected" : fits ? "q-option" : "q-option-muted"}`
+        },
+        /* @__PURE__ */ React.createElement("div", { className: "text-sm font-extrabold", dir: "ltr" }, p.id),
+        /* @__PURE__ */ React.createElement("div", { className: "mt-0.5 text-xs font-semibold opacity-90" }, p.down, "% \xB7 ", t[p.inquiry]),
+        tag && /* @__PURE__ */ React.createElement("div", { className: `mt-1 text-[10px] font-bold uppercase ${active ? "opacity-90" : "q-text-hl"}` }, tag)
+      );
+    }))))), /* @__PURE__ */ React.createElement("aside", { className: "lg:sticky lg:top-24 lg:self-start" }, /* @__PURE__ */ React.createElement("div", { className: "overflow-hidden q-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-900/5" }, /* @__PURE__ */ React.createElement("div", { className: "q-bg-ink p-6" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between text-xs font-semibold uppercase tracking-wider text-slate-400" }, /* @__PURE__ */ React.createElement("span", null, t.summary), program && /* @__PURE__ */ React.createElement("span", { className: "rounded-lg bg-white/10 px-2 py-1 text-white", dir: "ltr" }, program.id)), /* @__PURE__ */ React.createElement("div", { className: "mt-3 text-sm text-slate-300" }, t.monthly), /* @__PURE__ */ React.createElement("div", { className: "mt-1 flex items-baseline gap-2" }, /* @__PURE__ */ React.createElement("span", { className: "text-4xl font-extrabold tracking-tight tabular-nums" }, fmt(calc.monthly)), /* @__PURE__ */ React.createElement("span", { className: "text-sm font-semibold text-slate-400" }, t.egp, " ", t.perMonth)), /* @__PURE__ */ React.createElement("div", { className: "mt-3 text-xs text-slate-400" }, tenor, " ", t.months, " \xB7 ", rate, "% ", t.flat, " \xB7 ", t.down, " ", down, "%")), /* @__PURE__ */ React.createElement("div", { className: "divide-y divide-slate-100 px-6 py-2" }, /* @__PURE__ */ React.createElement(Row, { label: t.carLabel, value: (carType === "new" ? t.newCar : t.usedCar) + (carDescription ? ` \xB7 ${carDescription}` : "") }), sourceObj && /* @__PURE__ */ React.createElement(Row, { label: t.detected, value: L(sourceObj) }), /* @__PURE__ */ React.createElement(Row, { label: t.price, value: `${fmt(price)} ${t.egp}` }), /* @__PURE__ */ React.createElement(Row, { label: t.downAmt, value: `${fmt(calc.downAmount)} ${t.egp}` }), /* @__PURE__ */ React.createElement(Row, { label: t.financed, value: `${fmt(calc.financed)} ${t.egp}`, strong: true }), /* @__PURE__ */ React.createElement(Row, { label: t.totalInterest, value: `${fmt(calc.interest)} ${t.egp}` }), /* @__PURE__ */ React.createElement(Row, { label: t.totalPayable, value: `${fmt(calc.total)} ${t.egp}` }), /* @__PURE__ */ React.createElement(Row, { label: t.profileLabel, value: applicantLabel }), program && /* @__PURE__ */ React.createElement(Row, { label: t.inquiry, value: t[program.inquiry] })), /* @__PURE__ */ React.createElement("form", { onSubmit: handleRequestCall, className: "q-surface q-ink border-t border-slate-200 p-6" }, /* @__PURE__ */ React.createElement("h3", { className: "flex items-center gap-2 font-bold" }, /* @__PURE__ */ React.createElement(Phone, { className: "q-text-primary h-4 w-4" }), " ", t.callback), /* @__PURE__ */ React.createElement("div", { className: "mt-4 space-y-3" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement(User, { className: "pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" }), /* @__PURE__ */ React.createElement("input", { "aria-label": t.name, value: name, maxLength: 60, onChange: (e) => setName(e.target.value), placeholder: t.namePh, className: `${inputCls} ps-11 ${errors.name ? "border-red-400" : ""}` })), errors.name && /* @__PURE__ */ React.createElement("p", { className: "mt-1 text-xs text-red-600" }, errors.name)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement(Phone, { className: "pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" }), /* @__PURE__ */ React.createElement("input", { "aria-label": t.phone, inputMode: "tel", dir: "ltr", value: phone, maxLength: 11, onChange: (e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11)), placeholder: t.phonePh, className: `${inputCls} ps-11 ${isAr ? "text-right" : ""} ${errors.phone ? "border-red-400" : ""}` })), errors.phone && /* @__PURE__ */ React.createElement("p", { className: "mt-1 text-xs text-red-600" }, errors.phone))), /* @__PURE__ */ React.createElement("input", { type: "text", name: "website", tabIndex: -1, autoComplete: "off", "aria-hidden": "true", value: honeypot, onChange: (e) => setHoneypot(e.target.value), style: { position: "absolute", left: "-9999px", width: 1, height: 1, opacity: 0 } }), /* @__PURE__ */ React.createElement("button", { type: "submit", disabled: sending, className: "q-bg-primary q-btn disabled:opacity-70 mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold shadow-md shadow-blue-600/20" }, /* @__PURE__ */ React.createElement(Phone, { className: "h-4 w-4" }), " ", sending ? t.sending : t.requestCall), /* @__PURE__ */ React.createElement("a", { href: waQuoteLink, target: "_blank", rel: "noreferrer", className: "q-bg-hl q-btn mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold" }, /* @__PURE__ */ React.createElement(WhatsAppIcon, { className: "h-5 w-5" }), " ", t.sendWa), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: copySummary, className: "mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-slate-600 hover:bg-white" }, /* @__PURE__ */ React.createElement(Copy, { className: "h-4 w-4" }), " ", copied ? t.copied : t.copy), /* @__PURE__ */ React.createElement("p", { className: "mt-3 text-center text-[11px] leading-relaxed text-slate-500" }, t.indicative))))),
+    /* @__PURE__ */ React.createElement(
+      "a",
+      {
+        href: waChatLink,
+        target: "_blank",
+        rel: "noreferrer",
+        "aria-label": t.chatWa,
+        title: t.chatWa,
+        className: "q-bg-hl q-btn fixed bottom-6 end-6 z-40 hidden h-14 w-14 items-center justify-center rounded-full shadow-xl shadow-emerald-700/30 lg:flex"
+      },
+      /* @__PURE__ */ React.createElement(WhatsAppIcon, { className: "h-7 w-7" })
+    ),
+    /* @__PURE__ */ React.createElement("div", { className: "fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:hidden" }, /* @__PURE__ */ React.createElement("div", { className: "mx-auto flex max-w-7xl items-center gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "min-w-0 flex-1" }, /* @__PURE__ */ React.createElement("div", { className: "text-[11px] font-medium text-slate-500" }, t.monthly, " \xB7 ", program ? program.id : "\u2014"), /* @__PURE__ */ React.createElement("div", { className: "truncate text-xl font-extrabold tabular-nums" }, fmt(calc.monthly), " ", /* @__PURE__ */ React.createElement("span", { className: "text-xs text-slate-400" }, t.egp))), /* @__PURE__ */ React.createElement("a", { href: waChatLink, target: "_blank", rel: "noreferrer", className: "q-bg-hl flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold" }, /* @__PURE__ */ React.createElement(WhatsAppIcon, { className: "h-4 w-4" }), " WhatsApp"))),
+    /* @__PURE__ */ React.createElement("footer", { className: "q-white border-t border-slate-200" }, /* @__PURE__ */ React.createElement("div", { className: "mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-slate-500 sm:px-6" }, /* @__PURE__ */ React.createElement("span", null, "\xA9 ", (/* @__PURE__ */ new Date()).getFullYear(), " ", brand, " \u2014 ", t.footer), /* @__PURE__ */ React.createElement("a", { href: waChatLink, target: "_blank", rel: "noreferrer", className: "q-link inline-flex items-center gap-1.5 tabular-nums", dir: "ltr" }, /* @__PURE__ */ React.createElement(WhatsAppIcon, { className: "h-4 w-4" }), " ", formatPhone(CONFIG.whatsappNumber)))),
+    request && /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4", onClick: () => setRequest(null) }, /* @__PURE__ */ React.createElement("div", { className: "q-white w-full max-w-md rounded-3xl p-6 shadow-2xl", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "flex items-start justify-between" }, /* @__PURE__ */ React.createElement("span", { className: "q-badge-hl flex h-12 w-12 items-center justify-center rounded-2xl" }, /* @__PURE__ */ React.createElement(CheckCircle2, { className: "h-6 w-6" })), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setRequest(null), "aria-label": t.close, className: "rounded-xl p-2 text-slate-400 hover:bg-slate-100" }, /* @__PURE__ */ React.createElement(X, { className: "h-5 w-5" }))), /* @__PURE__ */ React.createElement("h3", { className: "mt-4 text-xl font-extrabold" }, request.sent ? t.sentTitle : t.reqTitle), /* @__PURE__ */ React.createElement("p", { className: "mt-1 text-sm text-slate-600" }, fill(request.sent ? t.sentBody : t.reqBody, { name, phone })), /* @__PURE__ */ React.createElement("div", { className: "q-surface mt-4 rounded-2xl p-4 ring-1 ring-slate-200" }, /* @__PURE__ */ React.createElement("div", { className: "text-xs font-semibold text-slate-500" }, t.reqRef), /* @__PURE__ */ React.createElement("div", { className: "font-mono text-lg font-bold", dir: "ltr" }, request.ref), /* @__PURE__ */ React.createElement("pre", { className: "mt-3 max-h-52 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-slate-700", style: { fontFamily: "inherit" } }, request.summary)), !request.sent && /* @__PURE__ */ React.createElement("a", { href: request.link, target: "_blank", rel: "noreferrer", onClick: () => setTimeout(() => setRequest(null), 300), className: "q-bg-hl q-btn mt-4 flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold" }, /* @__PURE__ */ React.createElement(WhatsAppIcon, { className: "h-5 w-5" }), " ", t.sendCallWa), request.sent && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setRequest(null), className: "q-bg-primary q-btn mt-4 flex w-full items-center justify-center rounded-xl py-3.5 font-semibold" }, t.close)))
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(QestakApp));
+</script>
+</body>
+</html>
