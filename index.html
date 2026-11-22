@@ -17,7 +17,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script>window.react = window.React; /* lucide-react UMD expects a lowercase global */</script>
 <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js"></script>
-<style>html,body{margin:0;background:#F4F7FC;color:#0F172A;color-scheme:light}input[type=range]{height:6px}</style>
+<style>html,body{margin:0;overflow-x:hidden;background:#F4F7FC;color:#0F172A;color-scheme:light}input[type=range]{height:6px}</style>
 </head>
 <body>
 <div id="root"></div>
@@ -271,7 +271,7 @@ const T = {
     newCar: "\u0639\u0631\u0628\u064A\u0629 \u062C\u062F\u064A\u062F\u0629",
     usedCar: "\u0639\u0631\u0628\u064A\u0629 \u0645\u0633\u062A\u0639\u0645\u0644\u0629",
     listing: "\u0644\u064A\u0646\u0643 \u0627\u0644\u0625\u0639\u0644\u0627\u0646 (\u0627\u062E\u062A\u064A\u0627\u0631\u064A)",
-    listingPh: "\u0627\u0644\u0635\u0642 \u0644\u064A\u0646\u0643 \u062F\u0648\u0628\u064A\u0632\u0644 \u0623\u0648 \u0645\u0627\u0631\u0643\u062A \u0628\u0644\u064A\u0633 \u0623\u0648 \u0647\u062A\u0644\u0627\u0642\u064A\u2026",
+    listingPh: "\u0627\u0644\u0635\u0642 \u0644\u064A\u0646\u0643 \u0627\u0644\u0625\u0639\u0644\u0627\u0646 \u0647\u0646\u0627\u2026",
     detected: "\u0627\u0644\u0645\u0635\u062F\u0631",
     source: "\u0644\u0642\u064A\u062A \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0641\u064A\u0646\u061F",
     year: "\u0633\u0646\u0629 \u0627\u0644\u0645\u0648\u062F\u064A\u0644",
@@ -355,7 +355,7 @@ const T = {
 const themeCss = (c) => {
   const r = (cls, body) => `.qestak.${cls},.qestak .${cls}{${body}}`;
   return [
-    `.qestak{--bg:${c.background};--card:${c.card};--surface:${c.surface};--ink:${c.text};--primary:${c.primary};--hl:${c.highlight};color-scheme:light;color:var(--ink);background-color:var(--bg)}`,
+    `.qestak{--bg:${c.background};--card:${c.card};--surface:${c.surface};--ink:${c.text};--primary:${c.primary};--hl:${c.highlight};color-scheme:light;color:var(--ink);background-color:var(--bg);overflow-x:clip}`,
     `.qestak input,.qestak select,.qestak textarea{color:var(--ink)}`,
     `.qestak input::placeholder{color:#94A3B8}`,
     r("q-page", "background-color:var(--bg)"),
